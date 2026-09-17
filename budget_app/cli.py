@@ -10,19 +10,33 @@ from budget_app.models import Transaction
 from budget_app.repository import create_repositories
 from budget_app.service import BudgetService
 
-
+# argparse.ArgumentParser: 파이썬 표준 라이브러리에 있는 커맨드라인 옵션 파싱 도구
+# 말그대로 사용자가 커맨드라인에서 친 옵션들을 파싱하는 것
+"""파서 설계도"""
 def build_parser() -> argparse.ArgumentParser:
+    # prog: 프로그램 이름
+    # description: 설명 문구
+    # 옵션 규칙을 담을 빈 그릇을 하나 만듦
     parser = argparse.ArgumentParser(prog="budget_app", description="나만의 용돈 기입장")
+
+    # 방금 만든 빈 그릇에 옵션을 하나 등록
     parser.add_argument("--data-dir", default="./data", help="데이터 저장 폴더 (기본: ./data)")
 
+    # 서브 파서란?
+    # parser가 여러 개 있는 것을 의미
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    # add, list는 서브파서이고, 해당 서브파서에 add_argument를 하는 건 옵션을 추가하는 것
     subparsers.add_parser("add", help="거래 추가 (대화형 입력)")
 
     list_parser = subparsers.add_parser("list", help="거래 목록 조회")
     list_parser.add_argument("--limit", type=int, default=None)
 
+    # dest는 뭔가요? -> destination의 줄임말. 생략해도 됨.
     search_parser = subparsers.add_parser("search", help="조건으로 거래 검색")
+
+    # 파이썬이 옵션 값을 파싱하고 나면 결과 객체 (args)의 어떤 이름표에 저장할지를 정하는 것이다.
+    # --from의 경우 자동으로 args.from으로 접근하지만 from은 예약어로 문법 오류가 발생한다.
     search_parser.add_argument("--from", dest="date_from")
     search_parser.add_argument("--to", dest="date_to")
     search_parser.add_argument("--category")
@@ -72,7 +86,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     return parser
 
-
+"""실제 입력값 해석"""
 def _prompt_add(service: BudgetService) -> None:
     date_str = input("날짜(YYYY-MM-DD): ").strip()
     type_str = input("타입(income/expense): ").strip()
@@ -97,11 +111,12 @@ def _prompt_add(service: BudgetService) -> None:
     )
     print(f"[저장 완료] id={tx.id}")
 
-
+"""Transaction 객체를 받아 그 안의 필드 6개를 골라 한 줄로 포맷해서 찍음"""
 def _print_transaction(t: Transaction) -> None:
     print(f"{t.id} | {t.date.isoformat()} | {t.type} | {t.category} | {t.amount} | {t.memo}")
 
 
+"""어떤 함수를 실행할지 라우팅"""
 @handle_errors
 @measure_time
 @log_calls

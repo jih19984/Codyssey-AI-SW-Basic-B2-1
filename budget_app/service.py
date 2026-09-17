@@ -222,6 +222,7 @@ class BudgetService:
     def delete_transaction(self, tx_id: str) -> None:
         transactions = list(self.tx_repo.read_all())
         idx = self._find_index(tx_id, transactions)
+        # 파이썬에서 리스트의 해당 요소 삭제할 수 있는 예약어
         del transactions[idx]
         self.tx_repo.rewrite_all(transactions)
 
